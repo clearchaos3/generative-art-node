@@ -18,6 +18,11 @@ let metadata = [];
 let attributes = [];
 let hash = [];
 let decodedHash = [];
+let createdHashes = [];
+if (fs.existsSync('hashes.txt')) {
+  var existingHashes = fs.readFileSync('hashes.txt').toString().split("\n");
+  console.log(existingHashes);
+}
 
 const addRarity = _str => {
   let itemRarity;
@@ -68,10 +73,12 @@ const layersSetup = layersOrder => {
 };
 
 const buildSetup = () => {
+  // console.log("begin buildSetup")
   if (fs.existsSync(buildDir)) {
     fs.rmdirSync(buildDir, { recursive: true });
   }
   fs.mkdirSync(buildDir);
+  // console.log("end buildSetup")
 };
 
 const saveLayer = (_canvas, _edition) => {
@@ -113,38 +120,64 @@ const drawLayer = async (_layer, _edition) => {
   if (element) {
     addAttributes(element, _layer);
     const image = await loadImage(`${_layer.location}${element.fileName}`);
-
-    ctx.drawImage(
-      image,
-      _layer.position.x,
-      _layer.position.y,
-      _layer.size.width,
-      _layer.size.height
-    );
-    saveLayer(canvas, _edition);
+    if (Object.values(createdHashes).includes(metadata[_edition - 1].hash)) {
+      console.log("Hash " + metadata[_edition - 1].hash + " already exists! Skipping.")
+    }
+    else {
+      ctx.drawImage(
+        image,
+        _layer.position.x,
+        _layer.position.y,
+        _layer.size.width,
+        _layer.size.height
+      );
+      saveLayer(canvas, _edition);
+    }
   }
 };
 
 const createFiles = edition => {
+  // console.log("begin createFiles")
   const layers = layersSetup(layersOrder);
+  //console.log(layers);
 
   for (let i = 1; i <= edition; i++) {
     layers.forEach((layer) => {
       drawLayer(layer, i);
     });
     addMetadata(i);
-    console.log("Creating edition " + i);
+    //console.log(metadata);
+    if (existingHashes) {
+      if (existingHashes.includes(metadata[i - 1].hash)) {
+        console.log("Hash " + metadata[i - 1].hash + " already exists! Skipping.")
+      }
+      else {
+        createdHashes.push({ hash: metadata[i - 1].hash, created: 1 })
+        //console.log(createdHashes);
+        console.log("Creating edition " + i);
+      }
+    }
   }
+  // console.log("end createFiles")
 };
 
 const createMetaData = () => {
+  // console.log("begin createMetaData")
   fs.stat(`${buildDir}/${metDataFile}`, (err) => {
-    if(err == null || err.code === 'ENOENT') {
+    if (err == null || err.code === 'ENOENT') {
       fs.writeFileSync(`${buildDir}/${metDataFile}`, JSON.stringify(metadata, null, 2));
+      var stream = fs.createWriteStream("hashes.txt", { flags: 'a' });
+      for (const hash in metadata) {
+        stream.write(metadata[hash].hash);
+        stream.write('\n');
+      }
+      stream.end();
     } else {
-        console.log('Oh no, error: ', err.code);
+      console.log('Oh no, error: ', err.code);
     }
   });
+
+  // console.log("end createMetaData")
 };
 
 module.exports = { buildSetup, createFiles, createMetaData };

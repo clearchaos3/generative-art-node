@@ -1,17 +1,20 @@
 const layersOrder = [
-    { name: 'background', number: 1 },
-    { name: 'ball', number: 2 },
-    { name: 'eye color', number: 12 },
-    { name: 'iris', number: 3 },
-    { name: 'shine', number: 1 },
-    { name: 'shine', number: 1 },
-    { name: 'bottom lid', number: 3 },
-    { name: 'top lid', number: 3 },
+    { name: 'Backgrounds', number: 11 },
+    { name: 'Accents', number: 11 },
+    { name: 'Tables', number: 4 },
+    { name: 'Walls', number: 7 },
+    { name: 'Windows', number: 1 },
+    { name: 'Shadows', number: 1 },
+    { name: 'Bushes', number: 9 },
+    { name: 'Hoses', number: 8 },
+    { name: 'Glass Rail', number: 1 },
+    { name: 'Chairs', number: 7 },
+    { name: 'Umbrellas', number: 8 },
 ];
-  
+
 const format = {
-    width: 230,
-    height: 230
+    width: 1920,
+    height: 1920
 };
 
 const rarity = [

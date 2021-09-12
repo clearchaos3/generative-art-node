@@ -4,7 +4,7 @@ const { defaultEdition } = require("./src/config.js");
 const edition = myArgs.length > 0 ? Number(myArgs[0]) : defaultEdition;
 
 (() => {
-  buildSetup();
+  // buildSetup();
   createFiles(edition);
   createMetaData();
 })();
