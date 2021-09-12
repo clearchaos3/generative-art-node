@@ -90,6 +90,12 @@ const buildSetup = () => {
   // console.log("end buildSetup")
 };
 
+
+let editionStartIndex = (Object.keys(existingHashes).length > 0 ? Object.keys(existingHashes).length - 1 : Object.keys(existingHashes).length);
+
+let editionIndex = editionStartIndex;
+console.log("edition start index: ", editionStartIndex);
+
 const saveLayer = (_canvas, _edition) => {
   fs.writeFileSync(`${buildDir}/${_edition}.png`, _canvas.toBuffer("image/png"));
 };
@@ -124,13 +130,15 @@ const addAttributes = (_element, _layer) => {
 
 const drawLayer = async (_layer, _edition) => {
   const rand = Math.random();
+  let currentIndex = editionIndex - editionStartIndex;
+  // console.log(editionStartIndex);
   let element =
     _layer.elements[Math.floor(rand * _layer.number)] ? _layer.elements[Math.floor(rand * _layer.number)] : null;
   if (element) {
     addAttributes(element, _layer);
     const image = await loadImage(`${_layer.location}${element.fileName}`);
-    if (Object.values(existingHashes).includes(metadata[_edition - 1].hash)) {
-      console.log("Hash " + metadata[_edition - 1].hash + " already exists! Skipping.")
+    if (Object.values(existingHashes).includes(metadata[currentIndex].hash)) {
+      console.log("Hash " + metadata[currentIndex].hash + " already exists! Skipping.")
     }
     else {
       ctx.drawImage(
@@ -149,32 +157,21 @@ const createFiles = edition => {
   // console.log("begin createFiles")
   const layers = layersSetup(layersOrder);
   //console.log(layers);
+  console.log("edition Start Index: ", editionStartIndex);
+
+  let editionEndIndex = editionStartIndex + edition;
+  console.log("edition End Index: ", editionEndIndex);
 
   for (let i = 1; i <= edition; i++) {
-    if (!firstRun) {
-      if (!existingHashes.includes(metadata[i - 1].hash)) {
-        layers.forEach((layer) => {
-          drawLayer(layer, i);
-        });
-        addMetadata(i);
-        //console.log(metadata);
-        existingHashes.push({ hash: metadata[i - 1].hash, created: 1 })
-        //console.log(existingHashes);
-        console.log("Creating edition " + i);
-      }
-      else {
-        console.log("Hash " + metadata[i - 1].hash + " already exists! Skipping.")
-      }
-    } else { //first run
-      layers.forEach((layer) => {
-        drawLayer(layer, i);
-      });
-      addMetadata(i);
-      //console.log(metadata);
-      existingHashes.push({ hash: metadata[i - 1].hash, created: 1 })
-      //console.log(existingHashes);
-      console.log("Creating edition " + i);
-    }
+    //first run
+    layers.forEach((layer) => {
+      drawLayer(layer, editionIndex);
+    });
+    addMetadata(i);
+    console.table(metadata);
+    existingHashes.push({ hash: metadata[i - 1].hash, created: 1 })
+    console.log("Creating edition " + i);
+    editionIndex++;
   }
   // console.log("end createFiles")
 };
@@ -183,13 +180,16 @@ const createMetaData = () => {
   // console.log("begin createMetaData")
   fs.stat(`${buildDir}/${metDataFile}`, (err) => {
     if (err == null || err.code === 'ENOENT') {
-      fs.writeFileSync(`${buildDir}/${metDataFile}`, JSON.stringify(metadata, null, 2));
-      var stream = fs.createWriteStream("hashes.txt", { flags: 'a' });
+      // fs.writeFileSync(`${buildDir}/${metDataFile}`,);
+      var metDataFileStream = fs.createWriteStream(`${buildDir}/${metDataFile}`, { flags: 'a' });
+      metDataFileStream.write(JSON.stringify(metadata, null, 2));
+      metDataFileStream.end();
+      var hashFileStream = fs.createWriteStream("hashes.txt", { flags: 'a' });
       for (const hash in metadata) {
-        stream.write(metadata[hash].hash);
-        stream.write('\n');
+        hashFileStream.write(metadata[hash].hash);
+        hashFileStream.write('\n');
       }
-      stream.end();
+      hashFileStream.end();
     } else {
       console.log('Oh no, error: ', err.code);
     }
