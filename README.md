@@ -2,7 +2,7 @@
 
 Create generative art by using the canvas api and node js
 
-![](https://github.com/clearchaos3/generative-art-node/blob/main/src/screenshot.png)
+![](https://github.com/clearchaos3/generative-art-node/tree/blob/main/src/screenshot.png)
 
 ## Installation
 
