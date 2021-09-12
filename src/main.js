@@ -14,14 +14,23 @@ const buildDir = `${process.env.PWD}/build`;
 const metDataFile = '_metadata.json';
 const layersDir = `${process.env.PWD}/layers`;
 
+
+function isEmpty(path) {
+  return fs.readdirSync(path).length <= 1;
+}
+
+const firstRun = isEmpty(buildDir);
+
 let metadata = [];
 let attributes = [];
 let hash = [];
 let decodedHash = [];
-let createdHashes = [];
 if (fs.existsSync('hashes.txt')) {
   var existingHashes = fs.readFileSync('hashes.txt').toString().split("\n");
   console.log(existingHashes);
+}
+else {
+  var existingHashes = [];
 }
 
 const addRarity = _str => {
@@ -120,7 +129,7 @@ const drawLayer = async (_layer, _edition) => {
   if (element) {
     addAttributes(element, _layer);
     const image = await loadImage(`${_layer.location}${element.fileName}`);
-    if (Object.values(createdHashes).includes(metadata[_edition - 1].hash)) {
+    if (Object.values(existingHashes).includes(metadata[_edition - 1].hash)) {
       console.log("Hash " + metadata[_edition - 1].hash + " already exists! Skipping.")
     }
     else {
@@ -142,20 +151,29 @@ const createFiles = edition => {
   //console.log(layers);
 
   for (let i = 1; i <= edition; i++) {
-    layers.forEach((layer) => {
-      drawLayer(layer, i);
-    });
-    addMetadata(i);
-    //console.log(metadata);
-    if (existingHashes) {
-      if (existingHashes.includes(metadata[i - 1].hash)) {
-        console.log("Hash " + metadata[i - 1].hash + " already exists! Skipping.")
-      }
-      else {
-        createdHashes.push({ hash: metadata[i - 1].hash, created: 1 })
-        //console.log(createdHashes);
+    if (!firstRun) {
+      if (!existingHashes.includes(metadata[i - 1].hash)) {
+        layers.forEach((layer) => {
+          drawLayer(layer, i);
+        });
+        addMetadata(i);
+        //console.log(metadata);
+        existingHashes.push({ hash: metadata[i - 1].hash, created: 1 })
+        //console.log(existingHashes);
         console.log("Creating edition " + i);
       }
+      else {
+        console.log("Hash " + metadata[i - 1].hash + " already exists! Skipping.")
+      }
+    } else { //first run
+      layers.forEach((layer) => {
+        drawLayer(layer, i);
+      });
+      addMetadata(i);
+      //console.log(metadata);
+      existingHashes.push({ hash: metadata[i - 1].hash, created: 1 })
+      //console.log(existingHashes);
+      console.log("Creating edition " + i);
     }
   }
   // console.log("end createFiles")
